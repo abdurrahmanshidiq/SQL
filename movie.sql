@@ -344,7 +344,7 @@ select * from reserved_seat;
 
 
 -- Tampilkan nama depan, nama belakang, & nama film untuk 5 customer pertama yang menonton di ruangan 'Kubrick'.
-select c.first_name, c.last_name, f.name, r.name
+select c.first_name, c.last_name, f.name as 'film_name', r.name as 'room_name'
 from bookings b
 join customers c on c.id = b.customer_id
 join screenings s on s.id = b.screening_id
@@ -366,7 +366,7 @@ limit 3;
 
 
 -- Tampilkan nama film dan durasi secara unique untuk film yang diputar di ruangan 'Chaplin'.
-select distinct f.name, f.length_min, r.name
+select distinct f.name as 'film_name', f.length_min, r.name as 'room_name'
 from screenings s 
 join rooms r on r.id = s.room_id
 join films f on f.id = s.film_id
