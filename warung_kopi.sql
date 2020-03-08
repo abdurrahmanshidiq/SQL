@@ -313,5 +313,124 @@ LIMIT 3 OFFSET 2;
 select distinct origin from products;
 select distinct price, origin from products;
 
+-- FRIDAY EXERCISE
+use coffe_store;
+show tables;
+select*from customers;
+select*from products;
+select*from orders;
+
+-- Tampilkan nama produk, harga, dan origin namun rename kolom price menjadi retail_price
+select name, price as `retail_price`, origin from products;
+-- jawaban : select name, price as retail_price, origin from products;
+
+-- Tampilkan nama belakang secara unique dan diurutkan secara ascending
+select distinct last_name from customers order by last_name;
+-- jawaban : select distinct last_name from customers order by last_name;
+
+-- Tampilkan product id secara unique untuk order yang dilakukan customer dengan id 2 selama bulan januari
+select distinct product_id from orders where customer_id = 2 and order_time like '2017-01%';
+-- jawaban : select distinct product_id from orders where customer_id = 2 and order_time like '2017-01-%';
+
+-- Tampilkan 3 order pertama yang dilakukan oleh customer dengan id 1 di bulan feburari 2017
+select*from orders where customer_id = 1 and order_time like '2017-02-%' limit 3;
+-- select * from orders where customer_id = 1 and order_time like '2017-02%' limit 3;
+
+-- Tampilkan semua kolom, 5 order terakhir yang dilakukan user dengan id 1
+select*from orders where customer_id = 1 order by order_time desc limit 5;
+-- jawaban select * from orders where customer_id = 1 order by order_time desc limit 5;
 
 
+-- JOIN
+use coffe_store;
+show tables;
+select*from customers;
+select*from products;
+select*from orders;
+
+-- Tampilkan informasi penjualan produk beserta harganya
+
+-- select products.name, products.price, orders.order_time
+-- from orders join products on orders.product_id = products.id
+-- order by orders.order_time;
+
+select products.name, products.price, orders.order_time
+from orders join products on orders.product_id = products.id
+order by orders.order_time;
+-- ------------------------------------------------------------------------------
+
+-- Tanggal berapa saja product Espresso di order selama bulan februari
+
+-- select p.name, o.order_time
+-- from orders o join products p  on o.product_id = p.id
+-- where p.name = 'Espresso'and o.order_time like '2017-02-%';
+
+select products.name, orders.order_time
+from orders join products on orders.product_id = products.id
+where products.name = 'Espresso' and orders.order_time like '2017-02%';
+-- --------------------------------------------------------------------------------------------
+
+-- Tampilkan nama depan, nama belakang, nama, harga,  waktu order
+-- untuk customer yang memiliki nama belakang 'Martin', urutkan menurut waktu order.
+
+-- select c.first_name, c.last_name, p.name, p.price,  o.order_time from  orders o
+-- join customers c on c.id = o.customer_id
+-- join products p on p.id = o.product_id
+-- where last_name = 'Martin'
+-- order by o.order_time;
+
+select c.first_name, c.last_name, p.name, p.price, o.order_time
+from orders o 
+join customers c on o.customer_id = c.id
+join products p on o.product_id = p.id
+where c.last_name = 'Martin'
+order by o.order_time;
+
+-- cara 2
+select c.first_name, c.last_name, p.name, p.price,  o.order_time from orders o join (products p, customers c) 
+on o.product_id = p.id and o.customer_id = c.id
+where last_name = 'Martin'
+order by o.order_time;
+-- ------------------------------------------------------------------------------------------------------------------
+-- Tampilkan order id, nama depan, nama belakang, no tlp, untuk yang membeli 'Latte'
+-- select o.id, c.first_name, c.last_name, c.phone_number
+-- from orders o join (products p, customers c)
+-- on o.product_id = p.id and o.customer_id = c.id
+-- where p.name = 'Latte';
+
+select o.id, c.first_name, c.last_name, c.phone_number
+from orders o join (customers c, products p)
+on o.product_id = p.id and o.customer_id = c.id
+where p.name = 'Latte';
+-- -----------------------------------------------------------------------------------------------
+
+select o.id, p.name, o.order_time
+from products p join orders o on p.id = o.product_id
+order by o.id;
+-- ----------------------------------------------------------------------------------------------------
+-- Tampilkan nama product, waktu order, untuk 'Filter' yang terjual antara
+-- 15 januari - 14 februari
+
+-- select p.name, o.order_time
+-- from orders o join products p on p.id = o.product_id
+-- where p.name = 'Filter'
+-- and o.order_time between '2017-01-15' and '2017-02-15';
+
+select p.name, o.order_time 
+from orders o join products p on o.product_id = p.id
+where p.name = 'Filter' and o.order_time between '2017-01-15' and '2017-02-15';
+
+-- -----------------------------------------------------------------------------------------------------
+-- Tampilkan nama product, harga, waktu order yang dibeli oleh Wanita
+-- pada 15 januari - 14 februari, di urutkan berdasarkan waktu order.
+
+-- select p.name, p.price, o.order_time
+-- from orders o join (customers c, products p)
+-- on o.customer_id = c.id and o.product_id = p.id
+-- where c.gender = 'F' and o.order_time between '2017-01-15' and '2017-02-15';
+
+select p.name, p.price, c.gender, o.order_time
+from orders o join (customers c, products p)
+on o.product_id = p.id and o.customer_id = c.id
+where c.gender = 'F' and o.order_time between '2017-01-15' and '2017-02-15'
+order by o.order_time; 
