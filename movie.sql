@@ -350,19 +350,19 @@ join customers c on c.id = b.customer_id
 join screenings s on s.id = b.screening_id
 join rooms r on r.id = s.room_id
 join films f on f.id = s.film_id
-where r.name = 'Kubrick' order by s.start_time
+where r.name = 'Kubrick' order by b.id
 limit 5;
+
+
 
 -- Tampilkan booking id, email, nama film & durasi untuk 3 film terakhir yang dipesan customer dgn email 'shoover@gmail.com'.
 select b.id as 'booking_id', c.email, f.name as 'film_name', f.length_min
 from bookings b
--- join reserved_seat r on r.booking_id = b.id
 join customers c on c.id = b.customer_id
 join screenings s on s.id = b.screening_id
 join films f on f.id = s.film_id
 where c.email = 'shoover@gmail.com' order by b.id desc
 limit 3;
-
 
 
 -- Tampilkan nama film dan durasi secara unique untuk film yang diputar di ruangan 'Chaplin'.
@@ -373,10 +373,8 @@ join films f on f.id = s.film_id
 where r.name = 'Chaplin';
 
 
-
 -- Tampilkan email, nomor, baris bangku, untuk bangku apa saja yang dipesan oleh user dg email 'jp@gmail.com'
-
-select c.email, st.number, st.row_num
+select c.email, st.number as seat_num, st.row_num
 from reserved_seat r
 join seats st on st.id = r.seat_id
 join bookings b on b.id = r.booking_id
@@ -384,11 +382,201 @@ join customers c on c.id = b.customer_id
 where c.email = 'jp@gmail.com';
 
  
--- Tampilkan first name dan last name untul customer yang memesan film 'Jigsaw' kemudian urutkan berdasarkan waktu tayang.
-select c.first_name, c.last_name
+-- Tampilkan first name, last name, waktu mulai film, nomor & baris bangku untul customer yang memesan film 'Jigsaw' kemudian urutkan berdasarkan waktu tayang.
+select c.first_name, c.last_name, f.name as film_name, s.start_time, st.number as seat_number, st.row_num
 from bookings b
 join customers c on c.id = b.customer_id
 join screenings s on s.id = b.screening_id
 join films f on f.id = s.film_id
+join reserved_seat r on r.booking_id = b.id
+join seats st on st.id = r.seat_id
 where f.name = 'Jigsaw' order by s.start_time;
+-- -----------------------------------------------------------------------------------------------------------------------
+-- NUMERIC FUNCTIONS 
+-- (agregat function)
+-- -----------------------------------------------------------------------------------------------------------------------
 
+-- COUNT
+select count(*) from customers;
+-- SUM
+-- Banyaknya bangku dalam ssatu bioskop (gabungan 3 ruangan)
+select sum(no_seats) from rooms ;
+
+-- MAX
+-- Jumlah bangku terbanyak dalam satu ruangan
+select max(no_seats) from rooms;
+
+-- MIN
+-- Durasi tersingkat dari sebuah film
+select min(length_min) from films;
+
+-- AVG
+-- Rata-rata durasi film
+select avg(length_min) from films;
+
+-- Banyaknya booking yang dilakukan untuk setiap film pada jadwal tertentu
+-- tampilkan nama film, waktu tayang, banyaknya booking
+select f.name, s.start_time, count(f.name)
+from bookings b
+join screenings s on s.id = b.screening_id
+join films f on f.id = s.film_id
+group by f.name, s.start_time
+order by s.start_time;
+
+-- Berapa banyak jadwal (screening) untuk film 'Blade Runner 2049' pada bulan oktober
+select count(*)
+from films f
+join screenings s on s.film_id = f.id
+where s.start_time like '2017-10%' and f.name  = 'Blade Runner 2049';
+
+-- Berapa banyak booking untuk setiap film di bulan oktober
+-- tampilkan nama film, banyak booking
+select f.name, count(b.id)
+from screenings s
+join bookings b on b.screening_id = s.id
+join films f on f.id = s.film_id
+where s.start_time like '2017-10%'
+group by f.name order by f.name;
+
+-- Banyaknya jadwal untuk per film
+-- Tampilkan nama film, banyak jadwal
+select f.name, count(s.start_time)
+from screenings s
+join films f on f.id = s.film_id
+group by f.name 
+order by count(s.start_time);
+-- Atau
+select f.name, count(*) -- count(*) menghitung banyaknya data
+from screenings s
+join films f on f.id = s.film_id
+group by f.name 
+order by count(*);
+
+-- Tampilkan nama depan, nama belakang, total boking
+-- untuk 3 orang  dengan booking terbanyak
+select c.first_name, c.last_name, count(*)
+from bookings b
+join customers c on c.id = b.customer_id 
+group by b.customer_id -- atau group by c.first_name, c.last_name
+order by count(*) desc
+limit 3;
+
+-- Tampilkan nama depan total bangku yang pernah dipesan 
+-- untuk 3 orang dgn total bangku yang pernah dipesan
+select c.first_name, c.last_name, count(*)
+from reserved_seat r
+join bookings b on b.id = r.booking_id
+join seats st on st.id = r.seat_id
+join customers c on c.id = b.customer_id
+group by c.first_name, c.last_name
+order by count(*) desc
+limit 3;
+
+-- -----------------------------------------------------------------------------------
+use movie;
+
+-- HAVING
+-- Melakukan filtering setelah query GROUP BY, krn WHERE tidak dpt digunakan
+
+-- Tampilkan nama depan, nama belakang, total boking
+-- untuk org yang memiliki total boking > 9
+select c.first_name, c.last_name, count(*)
+from bookings b
+join customers c on c.id = b.customer_id 
+group by c.first_name, c.last_name
+having count(*) >9 -- jika filtering dilakukan dgn query WHERE maka hasilnya error
+order by count(*) desc;
+
+
+-- Tampilkan nama depan total bangku yang pernah dipesan 
+-- untuk total bangku yg dipesan > 20
+select c.first_name, c.last_name, count(*)
+from reserved_seat r
+join bookings b on b.id = r.booking_id
+join seats st on st.id = r.seat_id
+join customers c on c.id = b.customer_id
+group by c.first_name, c.last_name
+having count(*) >20
+order by count(*) desc;
+
+-- --------------------------------------------------------------------------
+-- Sub Query
+-- seperti nested
+
+-- Film dgn durasi film diatas rata-rata
+select name, length_min from films
+where length_min > (select avg(length_min) from films);
+
+-- Ruangan dengan jumlah bangku di atas rata-rata
+select name, no_seats from rooms
+where no_seats > (select avg(no_seats) from rooms);
+
+-- ------------------------------------------------------------------------
+-- DATE, MONTH, YEAR
+
+select date('2018-06-05 07:32:45') as dateNow;
+select year('2018-06-05 07:32:45') as yearNow;
+select month('2018-06-05 07:32:45') as monthNow;
+select dayofmonth('2018-06-05 07:32:45') as day;
+
+-- screening yg dilakukan bulan oktober
+select * from screenings where month(start_time) = 9; -- bisa 9 atau '9'
+select * from screenings where month(start_time) = '10';
+
+-- screening yang dilakukan di tahun 2017
+select * from screenings where year(start_time) = 2017;
+
+-- screening yg berjalan di tanggal 8,14,22
+select * from screenings where dayofmonth(start_time) in (8,14,22);
+
+-- --------------------------------------------------------------------------
+select * from films;
+select * from customers;
+select * from rooms;
+select * from screenings;
+select * from bookings;
+select * from seats;
+select * from reserved_seat;
+
+-- film apaa saja yg memiliki durasi lebih dari 2 jam
+select * from films where length_min >120;
+
+-- film yang memiliki jadwal tampil paling banyak di bulan Oktober
+select f.name,s.start_time, count(*) as total_tayang
+from screenings s
+join films f on f.id = s.film_id
+group by f.name
+having month(start_time) = 10
+order by total_tayang desc
+limit 1 ;
+
+-- berapa banyak booking yang dimiliki oleh film 'Jigsaw' di bulan oktober
+select f.name, count(*)
+from screenings s
+join films f on f.id = s.film_id
+join bookings b on b.screening_id = s.id
+group by f.name
+having name = 'Jigsaw';
+
+-- film yang paling banyak tayang di ruang 'Chaplin'
+select f.name,r.name, count(*)
+from screenings s
+join rooms r on r.id = s.room_id
+join films f on f.id = s.film_id
+group by f.name,r.name
+having r.name = 'Chaplin'
+order by count(*) desc
+limit 1;
+
+-- Berapa banyak customer yang melakukan booking di bulan oktober
+select c.first_name, c.last_name,s.start_time, count(*)
+from bookings b
+join screenings s on s.id = b.screening_id
+join customers c on c.id = b.customer_id
+group by c.first_name,c.last_name
+having month(s.start_time) = 10
+order by count(*) desc;
+
+select count(distinct(c.id)) from customers c
+join bookings b on c.id = b.customer_id
+join screenings s on s.id = b.screening_id;
